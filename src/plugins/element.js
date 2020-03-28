@@ -11,7 +11,6 @@ import {
   Aside,
   Menu,
   Submenu,
-  MenuItemGroup,
   MenuItem
 } from 'element-ui'
 
@@ -25,6 +24,5 @@ Vue.use(Main)
 Vue.use(Aside)
 Vue.use(Menu)
 Vue.use(Submenu)
-Vue.use(MenuItemGroup)
 Vue.use(MenuItem)
 Vue.prototype.$message = Message

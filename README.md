@@ -33,4 +33,20 @@ Vue.prototype.$http = axios
   this.$router.push('/login')
   ~~~
 
+
+## 二.菜单栏
+
+### 1.通过接口获取菜单数据
+
+- ~~~javascript
+  //通过axios 请求拦截器添加token， 保证拥有获取数据的权限
+  // axios 请求拦截
+  axios.interceptors.request.use(config => {
+      //为请求头添加对象， 添加Token验证的Authorization字段
+      config.headers.Authorization = window.sessionStorage.getItem('token')
+      return config
+  })
+  ~~~
+
 - 
+
