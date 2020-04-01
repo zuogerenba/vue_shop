@@ -98,6 +98,24 @@
 <script>
 export default {
   data() {
+    // 验证邮箱的正则
+    var checkEmail = (rule, vaule, callback) => {
+      const regEmail = /^(a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/
+      if (regEmail.test(vaule)) {
+        // 合法的邮箱
+        return callback()
+      }
+      callback(new Error('请输入合法的邮箱'))
+    }
+    // 验证手机号的正则
+    var checkMobil = (rule, vaule, callback) => {
+      // 表达式
+      const regMobil = /^(0|86|17951)?(13[0-9]|15[0123456789]|17[678]|18[0-9]|14[57])[0-9]{8}$/
+      if (regMobil.test(vaule)) {
+        return callback()
+      }
+      callback(new Error('请输入合法的手机号'))
+    }
     return {
       queryInfo: {
         query: '',
@@ -126,11 +144,13 @@ export default {
         ],
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' }
+          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' }
         ],
         mobil: [
           { required: true, message: '请输入手机号', trigger: 'blur' },
-          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' }
+          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          { validator: checkMobil, trigger: 'blur' }
         ]
       }
     }
