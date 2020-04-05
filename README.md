@@ -50,3 +50,36 @@ Vue.prototype.$http = axios
 
 - 
 
+## 三.用户管理界面
+
+### 1.添加用户表单
+
+- 1.1验证邮箱
+
+  - ~~~javascript
+    var checkEmail = (rule, vaule, callback) => {
+          const regEmail = /^(a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/
+          if (regEmail.test(vaule)) {
+            // 合法的邮箱
+            return callback()
+          }
+          callback(new Error('请输入合法的邮箱'))
+        }
+    ~~~
+
+- 1.2验证手机号
+
+  - ```javascript
+        // 验证手机号的正则
+        var checkMobil = (rule, vaule, callback) => {
+          // 表达式
+          const regMobil = /^(0|86|17951)?(13[0-9]|15[0123456789]|17[678]|18[0-9]|14[57])[0-9]{8}$/
+          if (regMobil.test(vaule)) {
+            return callback()
+          }
+          callback(new Error('请输入合法的手机号'))
+        }
+    ```
+
+- 
+

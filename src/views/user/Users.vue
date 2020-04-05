@@ -39,10 +39,15 @@
           </template>
         </el-table-column>
         <el-table-column label="操作" prop="role_name">
-          <template>
+          <template slot-scope="scope">
             <!-- 修改按钮 -->
             <el-tooltip effect="dark" content="编辑用户" placement="top-end" :enterable="false">
-              <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
+              <el-button
+                type="primary"
+                icon="el-icon-edit"
+                size="mini"
+                @click="showEditDialog(scope.row.id)"
+              ></el-button>
             </el-tooltip>
             <!-- 删除按钮 -->
             <el-tooltip effect="dark" content="删除用户" placement="top-end" :enterable="false">
@@ -69,7 +74,7 @@
     </el-card>
 
     <!-- 添加用户的对话框 -->
-    <el-dialog title="添加用户" :visible.sync="addDialogVisable" width="50%">
+    <el-dialog title="添加用户" :visible.sync="addDialogVisable" width="50%" @close="addDialogClose">
       <!-- 内容主体区 -->
       <el-form ref="addFormRef" :model="addForm" label-width="70px" :rules="addFormRules">
         <!-- 子表单 -->
@@ -82,14 +87,33 @@
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="addForm.email"></el-input>
         </el-form-item>
-        <el-form-item label="手机号" prop="mobil">
-          <el-input v-model="addForm.mobil"></el-input>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="addForm.mobile"></el-input>
         </el-form-item>
       </el-form>
       <!-- 底部区域 -->
       <span slot="footer" class="dialog-footer">
         <el-button @click="addDialogVisable = false">取 消</el-button>
-        <el-button type="primary" @click="addDialogVisable = false">确 定</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 修改用户的对话框 -->
+    <el-dialog title="修改用户" :visible.sync="editDialogVisible" width="50%" @close="editDialogClose">
+      <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="70px">
+        <el-form-item label="用户名">
+          <el-input v-model="editForm.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="editForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -100,7 +124,7 @@ export default {
   data() {
     // 验证邮箱的正则
     var checkEmail = (rule, vaule, callback) => {
-      const regEmail = /^(a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/
+      const regEmail = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[a-zA-Z0-9_-])+/
       if (regEmail.test(vaule)) {
         // 合法的邮箱
         return callback()
@@ -125,6 +149,7 @@ export default {
       userList: [],
       total: 0,
       addDialogVisable: false,
+      editDialogVisible: false,
       // 添加用户的表单
       addForm: {
         username: '',
@@ -144,12 +169,28 @@ export default {
         ],
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          // { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
           { validator: checkEmail, trigger: 'blur' }
         ],
-        mobil: [
+        mobile: [
           { required: true, message: '请输入手机号', trigger: 'blur' },
-          { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          // { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          { validator: checkMobil, trigger: 'blur' }
+        ]
+      },
+
+      // 查询到的用户信息对象
+      editForm: {},
+      // 修改表单的验证规则
+      editFormRules: {
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          // { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' }
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          // { min: 3, max: 10, message: '长度在3-10个字符之间', trigger: 'blur' },
           { validator: checkMobil, trigger: 'blur' }
         ]
       }
@@ -169,7 +210,7 @@ export default {
       this.userList = res.data.users
       this.total = res.data.total
       // console.log(res)
-      console.log(this.userList)
+      // console.log(this.userList)
     },
     // 监听pagesize改变
     handleSizeChange(newSize) {
@@ -194,6 +235,44 @@ export default {
         return this.$message.error('更新用户状态失败!')
       }
       this.$message.success('更新用户状态成功')
+    },
+    // 监听添加用户的对话框关闭事件
+    addDialogClose() {
+      this.$refs.addFormRef.resetFields()
+    },
+    // 点击按钮添加新用户
+    addUser() {
+      this.$refs.addFormRef.validate(async valid => {
+        // console.log(valid)
+        if (!valid) return
+        // 发起添加用户的网络请求
+        const { data: res } = await this.$http.post('users', this.addForm)
+        console.log(res)
+        if (res.meta.status !== 201) {
+          this.$message.error('添加用户失败')
+        }
+        this.$message.success('添加用户成功')
+        // 将对话框不可见
+        this.addDialogVisable = false
+        // 重新获取用户列表
+        this.getUserList()
+      })
+    },
+    // 展示伯氨基用户对话框
+    async showEditDialog(id) {
+      // console.log(id)
+      const { data: res } = await this.$http.get('users/' + id)
+
+      if (res.meta.status !== 200) {
+        return this.$message.error('查询用户失败')
+      }
+      this.editForm = res.data
+      this.editDialogVisible = true
+    },
+    // 监听修改用户对话框的关闭事件
+    editDialogClose() {
+      // console.log('--')
+      this.$refs.editFormRef.resetFields()
     }
   }
 }
