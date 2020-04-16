@@ -18,7 +18,45 @@
       <!-- 角色列表区域 -->
       <el-table :data="rolesList" border stripe>
         <!-- 展开列 -->
-        <el-table-column type="expand"></el-table-column>
+        <el-table-column type="expand">
+          <template slot-scope="scope">
+            <!-- <pre>{{scope.row}}</pre> -->
+            <el-row
+              :class="['bdbottom', index1 === 0 ? 'bdtop' : '', 'vcenter']"
+              v-for="(item1, index1) in scope.row.children"
+              :key="item1.id"
+            >
+              <!-- 渲染一级权限 -->
+              <el-col :span="5">
+                <el-tag closable>{{item1.authName}}</el-tag>
+                <i class="el-icon-caret-right"></i>
+              </el-col>
+              <!-- 通过for循环嵌套 渲染二级权限 -->
+              <el-col :span="19">
+                <el-row
+                  :class="[index2 === 0 ? '' : 'bdtop', 'vcenter']"
+                  v-for="(item2, index2) in item1.children"
+                  :key="index2"
+                >
+                  <!-- 二级 -->
+                  <el-col :span="6">
+                    <el-tag closable type="success">{{item2.authName}}</el-tag>
+                    <i class="el-icon-caret-right"></i>
+                  </el-col>
+                  <el-col :span="18">
+                    <el-tag
+                      closable
+                      @close="removeRightById"
+                      type="warning"
+                      v-for="(item3, index3) in item2.children"
+                      :key="index3"
+                    >{{item3.authName}}</el-tag>
+                  </el-col>
+                </el-row>
+              </el-col>
+            </el-row>
+          </template>
+        </el-table-column>
         <!-- 所索引列 -->
         <el-table-column type="index"></el-table-column>
         <el-table-column label="角色名称" prop="roleName"></el-table-column>
@@ -56,10 +94,42 @@ export default {
       this.rolesList = res.data
 
       console.log(this.rolesList)
+    },
+    // 根据id删除权限
+    async removeRightById() {
+      // 弹框
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该文件, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      ).catch(err => err)
+      if (confirmResult !== 'confirm') {
+        return this.$message.info('取消了删除')
+      }
+      this.$message.success('删除成功')
     }
   }
 }
 </script>
 
 <style lang='less' scoped>
+.el-tag {
+  margin: 7px;
+}
+
+.bdtop {
+  border-top: 1px solid #eee;
+}
+
+.bdbottom {
+  border-bottom: 1px solid #eee;
+}
+.vcenter {
+  display: flex;
+  align-items: center;
+}
 </style>
