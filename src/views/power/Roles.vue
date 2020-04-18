@@ -28,7 +28,7 @@
             >
               <!-- 渲染一级权限 -->
               <el-col :span="5">
-                <el-tag closable>{{item1.authName}}</el-tag>
+                <el-tag closable @close="removeRightById(scope.row, item1.id)">{{item1.authName}}</el-tag>
                 <i class="el-icon-caret-right"></i>
               </el-col>
               <!-- 通过for循环嵌套 渲染二级权限 -->
@@ -40,13 +40,17 @@
                 >
                   <!-- 二级 -->
                   <el-col :span="6">
-                    <el-tag closable type="success">{{item2.authName}}</el-tag>
+                    <el-tag
+                      closable
+                      type="success"
+                      @close="removeRightById(scope.row, item2.id)"
+                    >{{item2.authName}}</el-tag>
                     <i class="el-icon-caret-right"></i>
                   </el-col>
                   <el-col :span="18">
                     <el-tag
                       closable
-                      @close="removeRightById"
+                      @close="removeRightById(scope.row, item3.id)"
                       type="warning"
                       v-for="(item3, index3) in item2.children"
                       :key="index3"
@@ -65,11 +69,25 @@
           <template>
             <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
-            <el-button size="mini" type="warning" icon="el-icon-setting">分配权限</el-button>
+            <el-button
+              size="mini"
+              type="warning"
+              icon="el-icon-setting"
+              @click="showSetRightDialig"
+            >分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+    <!-- 分配权限的对话框 -->
+    <el-dialog title="分配权限" :visible.sync="setRightDialigVisible" width="50%">
+      <!-- 树形控件 -->
+      <el-tree :data="rightList" :props="treeProps"></el-tree>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="setRightDialigVisible = false">取 消</el-button>
+        <el-button type="primary" @click="setRightDialigVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -78,7 +96,16 @@ export default {
   data() {
     return {
       // 所有角色数据
-      rolesList: []
+      rolesList: [],
+      // 分配权限对话框的显示
+      setRightDialigVisible: false,
+      // 所有权限的数据
+      rightList: [],
+      // 属性控件的属性绑定对象
+      treeProps: {
+        label: 'authName',
+        children: 'children'
+      }
     }
   },
   created() {
@@ -93,10 +120,10 @@ export default {
       }
       this.rolesList = res.data
 
-      console.log(this.rolesList)
+      // console.log(this.rolesList)
     },
     // 根据id删除权限
-    async removeRightById() {
+    async removeRightById(role, rightId) {
       // 弹框
       const confirmResult = await this.$confirm(
         '此操作将永久删除该文件, 是否继续?',
@@ -110,7 +137,26 @@ export default {
       if (confirmResult !== 'confirm') {
         return this.$message.info('取消了删除')
       }
+      const { data: res } = await this.$http.delete(
+        `roles/${role.id}/rights/${rightId}`
+      )
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除权限失败')
+      }
       this.$message.success('删除成功')
+      // this.getRoleslist() 该方法每次删除完就重新打开页面
+      role.children = res.data
+    },
+    // 展示分配权限的对话框
+    async showSetRightDialig() {
+      // 获取所有权限的数据
+      const { data: res } = await this.$http.get('rights/tree')
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取全线数据失败')
+      }
+      // 保存请求到的数据
+      this.rightList = res.data
+      this.setRightDialigVisible = true
     }
   }
 }
